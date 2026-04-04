@@ -1,7 +1,7 @@
 from app.agents.router import detect_mode
 from app.schemas.response_schema import QueryResponse
 from fastapi import FastAPI, UploadFile, File
-from app.llm.generator import generate_answer
+from app.llm.generator import generate_answer, generate_summary
 from app.agents.router import detect_mode
 from app.schemas.response_schema import QueryResponse
 import os
@@ -66,7 +66,7 @@ def query_docs(query: str):
 def summarize_doc(query: str = "Summarize this document"):
     mode = "summarize"
     retrieved = retrieve_context(query)
-    answer = generate_answer(query, retrieved)
+    answer = generate_summary(retrieved)
 
     docs = retrieved.get("documents", [[]])[0]
     metas = retrieved.get("metadatas", [[]])[0]

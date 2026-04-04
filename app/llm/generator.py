@@ -1,12 +1,12 @@
 import ollama
 
 
-def generate_answer(query: str, retrieved_docs):
+def build_context(retrieved_docs):
     docs = retrieved_docs.get("documents", [[]])[0]
     metas = retrieved_docs.get("metadatas", [[]])[0]
 
     if not docs:
-        return "I could not find the answer in the document."
+        return None, [], []
 
     context = "\n\n".join(
         [
@@ -14,6 +14,15 @@ def generate_answer(query: str, retrieved_docs):
             for doc, meta in zip(docs, metas)
         ]
     )
+
+    return context, docs, metas
+
+
+def generate_answer(query: str, retrieved_docs):
+    context, docs, metas = build_context(retrieved_docs)
+
+    if not docs:
+        return "I could not find the answer in the document."
 
     prompt = f"""
 You are a precise document question-answering assistant.
@@ -39,6 +48,40 @@ Context:
             {
                 "role": "system",
                 "content": "You answer questions only from the provided document context."
+            },
+            {"role": "user", "content": prompt},
+        ],
+        options={"temperature": 0},
+    )
+
+    return response["message"]["content"].strip()
+
+
+def generate_summary(retrieved_docs):
+    context, docs, metas = build_context(retrieved_docs)
+
+    if not docs:
+        return "I could not generate a summary because no relevant document content was found."
+
+    prompt = f"""
+You are a document summarization assistant.
+
+Rules:
+1. Summarize only from the provided context.
+2. Write a clear and concise summary.
+3. Focus on the main purpose, important points, and notable details.
+4. Do not invent anything not present in the context.
+
+Context:
+{context}
+"""
+
+    response = ollama.chat(
+        model="phi3",
+        messages=[
+            {
+                "role": "system",
+                "content": "You summarize documents only from the provided context."
             },
             {"role": "user", "content": prompt},
         ],
