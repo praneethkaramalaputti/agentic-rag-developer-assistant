@@ -1,3 +1,4 @@
+from app.schemas.response_schema import QueryResponse
 from fastapi import FastAPI, UploadFile, File
 import os
 
@@ -26,7 +27,7 @@ async def upload_document(file: UploadFile = File(...)):
 
     return {"message": f"{file.filename} uploaded and indexed successfully"}
 
-@app.get("/query")
+@app.get("/query", response_model=QueryResponse)
 def query_docs(query: str):
     retrieved = retrieve_context(query)
 
