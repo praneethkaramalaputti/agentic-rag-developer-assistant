@@ -14,6 +14,12 @@ from app.retrieval.retriever import retrieve_context
 
 app = FastAPI()
 
+@app.get("/")
+def home():
+    return {
+        "message": "Agentic RAG Developer Assistant is running",
+        "docs": "Open /docs to test the API"
+    }
 UPLOAD_DIR = "data"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -55,3 +61,4 @@ def query_docs(query: str):
         "answer": answer,
         "matched_chunks": results
     }
+
