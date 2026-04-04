@@ -1,3 +1,4 @@
+from app.agents.router import detect_mode
 from app.schemas.response_schema import QueryResponse
 from fastapi import FastAPI, UploadFile, File
 import os
@@ -29,6 +30,7 @@ async def upload_document(file: UploadFile = File(...)):
 
 @app.get("/query", response_model=QueryResponse)
 def query_docs(query: str):
+    mode = detect_mode(query)
     retrieved = retrieve_context(query)
 
     docs = retrieved.get("documents", [[]])[0]
@@ -44,6 +46,6 @@ def query_docs(query: str):
     ]
 
     return {
-        "query": query,
+        "query": f"[mode={mode}] {query}",
         "matched_chunks": results
     }
