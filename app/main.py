@@ -6,7 +6,6 @@ from app.chunking.text_splitter import chunk_documents
 from app.embeddings.embedder import embed_texts
 from app.vectorstore.chroma_store import store_chunks
 from app.retrieval.retriever import retrieve_context
-from app.llm.generator import generate_answer
 
 app = FastAPI()
 
@@ -30,17 +29,20 @@ async def upload_document(file: UploadFile = File(...)):
 @app.get("/query")
 def query_docs(query: str):
     retrieved = retrieve_context(query)
-    answer = generate_answer(query, retrieved)
 
-    citations = [
+    docs = retrieved.get("documents", [[]])[0]
+    metas = retrieved.get("metadatas", [[]])[0]
+
+    results = [
         {
             "source": meta["source"],
-            "page_number": meta["page_number"]
+            "page_number": meta["page_number"],
+            "text": doc
         }
-        for meta in retrieved["metadatas"][0]
+        for doc, meta in zip(docs, metas)
     ]
 
     return {
-        "answer": answer,
-        "citations": citations
+        "query": query,
+        "matched_chunks": results
     }
