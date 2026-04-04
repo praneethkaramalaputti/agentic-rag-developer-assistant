@@ -1,11 +1,11 @@
-from openai import OpenAI
-from app.config import OPENAI_API_KEY
-
-client = OpenAI(api_key=OPENAI_API_KEY)
+import ollama
 
 def generate_answer(query: str, retrieved_docs):
-    docs = retrieved_docs["documents"][0]
-    metas = retrieved_docs["metadatas"][0]
+    docs = retrieved_docs.get("documents", [[]])[0]
+    metas = retrieved_docs.get("metadatas", [[]])[0]
+
+    if not docs:
+        return "I could not find enough relevant context in the uploaded document."
 
     context = "\n\n".join(
         [
@@ -26,12 +26,12 @@ Context:
 {context}
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
+    response = ollama.chat(
+        model="phi3",
         messages=[
             {"role": "system", "content": "You answer using only retrieved context."},
-            {"role": "user", "content": prompt}
-        ]
+            {"role": "user", "content": prompt},
+        ],
     )
 
-    return response.choices[0].message.content
+    return response["message"]["content"]

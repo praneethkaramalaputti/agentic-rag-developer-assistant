@@ -1,6 +1,9 @@
 from app.agents.router import detect_mode
 from app.schemas.response_schema import QueryResponse
 from fastapi import FastAPI, UploadFile, File
+from app.llm.generator import generate_answer
+from app.agents.router import detect_mode
+from app.schemas.response_schema import QueryResponse
 import os
 
 from app.loaders.pdf_loader import load_pdf
@@ -32,6 +35,7 @@ async def upload_document(file: UploadFile = File(...)):
 def query_docs(query: str):
     mode = detect_mode(query)
     retrieved = retrieve_context(query)
+    answer = generate_answer(query, retrieved)
 
     docs = retrieved.get("documents", [[]])[0]
     metas = retrieved.get("metadatas", [[]])[0]
@@ -46,6 +50,6 @@ def query_docs(query: str):
     ]
 
     return {
-        "query": f"[mode={mode}] {query}",
+        "query": f"[mode={mode}] {query}\n\nAnswer: {answer}",
         "matched_chunks": results
     }
