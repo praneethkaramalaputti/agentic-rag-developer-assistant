@@ -8,4 +8,6 @@ class MatchedChunk(BaseModel):
 
 class QueryResponse(BaseModel):
     query: str
+    mode: str
+    answer: str
     matched_chunks: List[MatchedChunk]

@@ -50,6 +50,8 @@ def query_docs(query: str):
     ]
 
     return {
-        "query": f"[mode={mode}] {query}\n\nAnswer: {answer}",
+        "query": query,
+        "mode": mode,
+        "answer": answer,
         "matched_chunks": results
     }
