@@ -89,3 +89,37 @@ Context:
     )
 
     return response["message"]["content"].strip()
+
+def generate_action_items(retrieved_docs):
+    context, docs, metas = build_context(retrieved_docs)
+
+    if not docs:
+        return "I could not find any relevant content to extract action items."
+
+    prompt = f"""
+You are an action-item extraction assistant.
+
+Rules:
+1. Use only the provided context.
+2. Extract clear action items, tasks, or next steps if they exist.
+3. Return them as short bullet points.
+4. If no action items are present, reply exactly:
+No clear action items were found in the document.
+
+Context:
+{context}
+"""
+
+    response = ollama.chat(
+        model="phi3",
+        messages=[
+            {
+                "role": "system",
+                "content": "You extract action items only from the provided document context."
+            },
+            {"role": "user", "content": prompt},
+        ],
+        options={"temperature": 0},
+    )
+
+    return response["message"]["content"].strip()

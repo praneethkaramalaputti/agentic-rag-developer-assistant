@@ -1,7 +1,7 @@
 from app.agents.router import detect_mode
 from app.schemas.response_schema import QueryResponse
 from fastapi import FastAPI, UploadFile, File
-from app.llm.generator import generate_answer, generate_summary
+from app.llm.generator import generate_answer, generate_summary, generate_action_items
 from app.agents.router import detect_mode
 from app.schemas.response_schema import QueryResponse
 import os
@@ -67,6 +67,30 @@ def summarize_doc(query: str = "Summarize this document"):
     mode = "summarize"
     retrieved = retrieve_context(query)
     answer = generate_summary(retrieved)
+
+    docs = retrieved.get("documents", [[]])[0]
+    metas = retrieved.get("metadatas", [[]])[0]
+
+    results = [
+        {
+            "source": meta["source"],
+            "page_number": meta["page_number"],
+            "text": doc
+        }
+        for doc, meta in zip(docs, metas)
+    ]
+
+    return {
+        "query": query,
+        "mode": mode,
+        "answer": answer,
+        "matched_chunks": results
+    }
+@app.get("/action-items", response_model=QueryResponse)
+def extract_action_items(query: str = "Extract action items from this document"):
+    mode = "extract_actions"
+    retrieved = retrieve_context(query)
+    answer = generate_action_items(retrieved)
 
     docs = retrieved.get("documents", [[]])[0]
     metas = retrieved.get("metadatas", [[]])[0]
