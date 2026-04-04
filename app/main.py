@@ -62,3 +62,27 @@ def query_docs(query: str):
         "matched_chunks": results
     }
 
+@app.get("/summarize", response_model=QueryResponse)
+def summarize_doc(query: str = "Summarize this document"):
+    mode = "summarize"
+    retrieved = retrieve_context(query)
+    answer = generate_answer(query, retrieved)
+
+    docs = retrieved.get("documents", [[]])[0]
+    metas = retrieved.get("metadatas", [[]])[0]
+
+    results = [
+        {
+            "source": meta["source"],
+            "page_number": meta["page_number"],
+            "text": doc
+        }
+        for doc, meta in zip(docs, metas)
+    ]
+
+    return {
+        "query": query,
+        "mode": mode,
+        "answer": answer,
+        "matched_chunks": results
+    }
