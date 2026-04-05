@@ -56,7 +56,6 @@ Context:
 
     return response["message"]["content"].strip()
 
-
 def generate_summary(retrieved_docs):
     context, docs, metas = build_context(retrieved_docs)
 
@@ -67,12 +66,17 @@ def generate_summary(retrieved_docs):
 You are a document summarization assistant.
 
 Rules:
-1. Summarize only from the provided context.
-2. Write a clear and concise summary.
-3. Focus on the main purpose, important points, and notable details.
-4. Do not invent anything not present in the context.
+1. Summarize only from the provided document content.
+2. Write a concise and accurate summary of the document.
+3. Focus on:
+   - what the document is about
+   - main sections or themes
+   - important technical or business points
+4. Do not invent details.
+5. Do not merge unrelated ideas.
+6. If the content looks like a resume, summarize it as a professional profile, experience, skills, and projects summary.
 
-Context:
+Document Content:
 {context}
 """
 
@@ -81,7 +85,7 @@ Context:
         messages=[
             {
                 "role": "system",
-                "content": "You summarize documents only from the provided context."
+                "content": "You summarize documents accurately using only the provided document content."
             },
             {"role": "user", "content": prompt},
         ],
@@ -116,6 +120,43 @@ Context:
             {
                 "role": "system",
                 "content": "You extract action items only from the provided document context."
+            },
+            {"role": "user", "content": prompt},
+        ],
+        options={"temperature": 0},
+    )
+
+    return response["message"]["content"].strip()
+def generate_comparison(query: str, retrieved_docs):
+    context, docs, metas = build_context(retrieved_docs)
+
+    if not docs:
+        return "I could not find enough relevant content to perform a comparison."
+
+    prompt = f"""
+You are a document comparison assistant.
+
+Rules:
+1. Use only the provided context.
+2. Compare the relevant items, sections, or documents based on the user's query.
+3. Highlight key similarities, differences, and notable points.
+4. Be concise and structured.
+5. If there is not enough information to compare, reply exactly:
+I could not find enough information in the document to make a comparison.
+
+Question:
+{query}
+
+Context:
+{context}
+"""
+
+    response = ollama.chat(
+        model="phi3",
+        messages=[
+            {
+                "role": "system",
+                "content": "You compare information only from the provided document context."
             },
             {"role": "user", "content": prompt},
         ],
