@@ -131,17 +131,23 @@ def generate_comparison(query: str, retrieved_docs):
     context, docs, metas = build_context(retrieved_docs)
 
     if not docs:
-        return "I could not find enough relevant content to perform a comparison."
+        return "I could not find enough information in the document to make a comparison."
 
     prompt = f"""
 You are a document comparison assistant.
 
 Rules:
 1. Use only the provided context.
-2. Compare the relevant items, sections, or documents based on the user's query.
-3. Highlight key similarities, differences, and notable points.
-4. Be concise and structured.
-5. If there is not enough information to compare, reply exactly:
+2. Compare only the items asked in the query.
+3. Be concise and structured.
+4. Focus on direct similarities and differences.
+5. Do not treat sections of the same document as different people or different sources.
+6. If comparing resume-like content, structure the answer as:
+   - Skills
+   - Projects
+   - Key overlap
+7. Keep the answer short.
+8. If there is not enough information, reply exactly:
 I could not find enough information in the document to make a comparison.
 
 Question:
@@ -156,7 +162,7 @@ Context:
         messages=[
             {
                 "role": "system",
-                "content": "You compare information only from the provided document context."
+                "content": "You compare content from the same document clearly, directly, and briefly."
             },
             {"role": "user", "content": prompt},
         ],
