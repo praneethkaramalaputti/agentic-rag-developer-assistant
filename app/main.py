@@ -124,14 +124,23 @@ def summarize_doc(source: str):
 
 
 @app.get("/action-items", response_model=QueryResponse)
-def extract_action_items(query: str = "Extract action items from this document", source: str = None):
+def extract_action_items(source: str):
     mode = "extract_actions"
-    retrieved = retrieve_context(query, source=source)
+    retrieved = get_document_chunks(source)
     answer = generate_action_items(retrieved)
-    results = format_results(retrieved)
+
+    paired = retrieved.get("ordered_pairs", [])
+    results = [
+        {
+            "source": meta["source"],
+            "page_number": meta["page_number"],
+            "text": doc,
+        }
+        for doc, meta in paired
+    ]
 
     return {
-        "query": query,
+        "query": f"Extract action items from document: {source}",
         "mode": mode,
         "answer": answer,
         "matched_chunks": results,
@@ -139,11 +148,20 @@ def extract_action_items(query: str = "Extract action items from this document",
 
 
 @app.get("/compare", response_model=QueryResponse)
-def compare_docs(query: str, source: str = None):
+def compare_docs(query: str, source: str):
     mode = "compare"
-    retrieved = retrieve_context(query, source=source)
+    retrieved = get_document_chunks(source)
     answer = generate_comparison(query, retrieved)
-    results = format_results(retrieved)
+
+    paired = retrieved.get("ordered_pairs", [])
+    results = [
+        {
+            "source": meta["source"],
+            "page_number": meta["page_number"],
+            "text": doc,
+        }
+        for doc, meta in paired
+    ]
 
     return {
         "query": query,
@@ -151,3 +169,18 @@ def compare_docs(query: str, source: str = None):
         "answer": answer,
         "matched_chunks": results,
     }
+@app.get("/sources")
+def list_sources():
+    all_results = retrieve_context("document", top_k=100)
+    metas = all_results.get("metadatas", [[]])[0]
+
+    sources = []
+    seen = set()
+
+    for meta in metas:
+        source = meta.get("source")
+        if source and source not in seen:
+            seen.add(source)
+            sources.append(source)
+
+    return {"sources": sorted(sources)}
