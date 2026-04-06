@@ -76,20 +76,28 @@ async def upload_document(file: UploadFile = File(...)):
     return {"message": f"{file.filename} uploaded and indexed successfully"}
 
 
-@app.get("/query", response_model=QueryResponse)
-def query_docs(query: str, source: str = None):
-    mode = detect_mode(query)
-    retrieved = retrieve_context(query, source=source)
-    answer = generate_answer(query, retrieved)
-    results = format_results(retrieved)
+@app.get("/summarize", response_model=QueryResponse)
+def summarize_doc(source: str):
+    mode = "summarize"
+    retrieved = get_document_chunks(source)
+    answer = generate_summary(retrieved)
+
+    paired = retrieved.get("ordered_pairs", [])
+    results = [
+        {
+            "source": meta["source"],
+            "page_number": meta["page_number"],
+            "text": doc,
+        }
+        for doc, meta in paired
+    ]
 
     return {
-        "query": query,
+        "query": f"Summarize document: {source}",
         "mode": mode,
         "answer": answer,
         "matched_chunks": results,
     }
-
 
 @app.get("/summarize", response_model=QueryResponse)
 def summarize_doc(source: str):
